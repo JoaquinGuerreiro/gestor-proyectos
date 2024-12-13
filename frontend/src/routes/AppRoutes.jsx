@@ -6,6 +6,7 @@ import Dashboard from '../pages/Dashboard';
 import Projects from '../pages/Projects';
 import Tasks from '../pages/Tasks';
 import PublicProjects from '../pages/PublicProjects';
+import Profile from '../pages/Profile';
 import PrivateRoute from './PrivateRoute';
 import Home from '../pages/Home';
 
@@ -24,6 +25,7 @@ const AppRoutes = () => {
           <Route path="/projects" element={<Projects />} />
           <Route path="/tasks" element={<Tasks />} />
           <Route path="/public-projects" element={<PublicProjects />} />
+          <Route path="/profile" element={<Profile />} />
         </Route>
       </Route>
 

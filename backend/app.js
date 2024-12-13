@@ -2,6 +2,8 @@ const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
 require('dotenv').config();
+const path = require('path');
+const fs = require('fs');
 
 const authRoutes = require('./routes/authRoutes');
 const projectRoutes = require('./routes/projectRoutes');
@@ -9,14 +11,34 @@ const taskRoutes = require('./routes/taskRoutes');
 
 const app = express();
 
+// Crear directorios de uploads si no existen
+const uploadsDir = path.join(__dirname, 'uploads');
+const profilesDir = path.join(uploadsDir, 'profiles');
+const publicDir = path.join(__dirname, 'public', 'uploads');
+
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir);
+}
+if (!fs.existsSync(profilesDir)) {
+  fs.mkdirSync(profilesDir);
+}
+if (!fs.existsSync(publicDir)) {
+  fs.mkdirSync(publicDir, { recursive: true });
+}
+
 // Middlewares
 app.use(cors({
-  origin: 'http://localhost:5173',
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
   credentials: true
 }));
 app.use(express.json());
+
+// Servir archivos estáticos desde la carpeta uploads
+app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
+  setHeaders: (res, path, stat) => {
+    res.set('Cross-Origin-Resource-Policy', 'cross-origin');
+  }
+}));
 
 // Middleware de logging para todas las peticiones
 app.use((req, res, next) => {
@@ -81,6 +103,39 @@ app.use((err, req, res, next) => {
     mensaje: 'Algo salió mal en el servidor',
     error: process.env.NODE_ENV === 'development' ? err.message : {}
   });
+});
+
+// Ruta absoluta al directorio de uploads
+console.log('Static files directory:', publicDir);
+
+// Configurar el middleware para servir archivos estáticos
+app.use('/uploads', (req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+  next();
+});
+
+// Servir archivos estáticos con opciones
+app.use('/uploads', express.static(publicDir, {
+  setHeaders: (res, path, stat) => {
+    res.set('Cross-Origin-Resource-Policy', 'cross-origin');
+    res.set('Access-Control-Allow-Origin', '*');
+  }
+}));
+
+// Middleware para debugging de acceso a archivos
+app.use('/uploads', (req, res, next) => {
+  const filePath = path.join(publicDir, req.url);
+  console.log('Request for file:', req.url);
+  console.log('Looking for file at:', filePath);
+  console.log('File exists:', fs.existsSync(filePath));
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).json({
+      status: 'error',
+      message: `File not found: ${req.url}`
+    });
+  }
+  next();
 });
 
 const PORT = process.env.PORT || 5000;

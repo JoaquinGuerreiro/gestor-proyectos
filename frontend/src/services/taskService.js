@@ -1,7 +1,7 @@
 import axiosInstance from '../utils/axios';
 import { notify } from './notificationService';
 
-const API_URL = 'http://localhost:5000/api/tasks';
+const API_URL = 'http://localhost:3333/api/tasks';
 
 export const taskService = {
   getTasks: async () => {
@@ -38,11 +38,13 @@ export const taskService = {
 
   createTask: async (taskData) => {
     try {
+      console.log('Enviando datos de tarea:', taskData);
       const response = await axiosInstance.post('/api/tasks', taskData);
       notify.success('Tarea creada exitosamente');
       return response.data.data;
     } catch (error) {
-      notify.error('Error al crear la tarea');
+      console.error('Error al crear la tarea:', error.response?.data || error);
+      notify.error(error.response?.data?.message || 'Error al crear la tarea');
       throw error;
     }
   },

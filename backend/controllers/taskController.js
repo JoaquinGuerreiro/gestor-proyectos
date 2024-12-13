@@ -5,6 +5,11 @@ const Task = require('../models/Task');
 console.log('Cargando controlador de tareas...');
 
 exports.createTask = catchAsync(async (req, res) => {
+  console.log('Creando tarea:', {
+    body: req.body,
+    userId: req.user.id
+  });
+
   const task = await taskService.createTask({
     ...req.body,
     creator: req.user.id

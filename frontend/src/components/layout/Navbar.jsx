@@ -1,3 +1,4 @@
+import { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import styled from 'styled-components';
 import { useAuth } from '../../context/AuthContext';
@@ -57,8 +58,84 @@ const Button = styled.button`
   }
 `;
 
+const UserDropdown = styled.div`
+  position: relative;
+  display: inline-block;
+`;
+
+const DropdownButton = styled.button`
+  background: transparent;
+  border: none;
+  color: white;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1rem;
+  
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+  }
+`;
+
+const DropdownContent = styled.div`
+  position: absolute;
+  right: 0;
+  top: 100%;
+  background: white;
+  min-width: 160px;
+  box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+  border-radius: 4px;
+  padding: 0.5rem 0;
+  z-index: 1000;
+  display: ${props => props.$isOpen ? 'block' : 'none'};
+`;
+
+const DropdownItem = styled(Link)`
+  color: #333;
+  padding: 0.5rem 1rem;
+  text-decoration: none;
+  display: block;
+  
+  &:hover {
+    background-color: #f5f5f5;
+  }
+`;
+
+const DropdownLogoutButton = styled.button`
+  color: #333;
+  padding: 0.5rem 1rem;
+  text-decoration: none;
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 1rem;
+  
+  &:hover {
+    background-color: #f5f5f5;
+  }
+`;
+
 const Navbar = () => {
   const { auth, logout } = useAuth();
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   return (
     <Nav>
@@ -70,7 +147,23 @@ const Navbar = () => {
             <NavLink to="/tasks">Mis Tareas</NavLink>
             <NavLink to="/projects">Mis Proyectos</NavLink>
             <NavLink to="/public-projects">Proyectos Públicos</NavLink>
-            <Button onClick={logout}>Cerrar Sesión</Button>
+            <UserDropdown ref={dropdownRef}>
+              <DropdownButton onClick={() => setIsDropdownOpen(!isDropdownOpen)}>
+                {auth.user.username}
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M7 10l5 5 5-5z"/>
+                </svg>
+              </DropdownButton>
+              <DropdownContent $isOpen={isDropdownOpen}>
+                <DropdownItem to="/profile">Mi Perfil</DropdownItem>
+                <DropdownLogoutButton onClick={() => {
+                  logout();
+                  setIsDropdownOpen(false);
+                }}>
+                  Cerrar Sesión
+                </DropdownLogoutButton>
+              </DropdownContent>
+            </UserDropdown>
           </>
         ) : (
           <>

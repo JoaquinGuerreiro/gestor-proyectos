@@ -5,24 +5,27 @@ const CustomError = require('../utils/CustomError');
 class TaskService {
   async createTask(taskData) {
     try {
-      console.log('Datos recibidos:', taskData); // Para debugging
-      const project = await Project.findOne({
-        _id: taskData.project,
-        $or: [
-          { creator: taskData.creator },
-          { isPublic: true }
-        ]
-      });
-
+      console.log('Datos recibidos:', taskData);
+      
+      // Verificar si el usuario es miembro del proyecto
+      const project = await Project.findById(taskData.project);
+      
       if (!project) {
-        throw new CustomError('Proyecto no encontrado o sin acceso', 404);
+        throw new CustomError('Proyecto no encontrado', 404);
+      }
+
+      // Verificar si el usuario es creador del proyecto
+      const isCreator = project.creators.some(
+        creator => creator.toString() === taskData.creator
+      );
+
+      if (!isCreator) {
+        throw new CustomError('No tienes permisos para crear tareas en este proyecto', 403);
       }
 
       const task = new Task(taskData);
       await task.save();
       
-      console.log('Tarea creada:', task); // Para debugging
-
       return await Task.findById(task._id)
         .populate('project', 'name')
         .populate('creator', 'username');

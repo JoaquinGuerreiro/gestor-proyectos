@@ -4,7 +4,10 @@ const CustomError = require('../utils/CustomError');
 class ProjectService {
   async createProject(projectData) {
     try {
-      const project = new Project(projectData);
+      const project = new Project({
+        ...projectData,
+        creators: [projectData.creator]
+      });
       await project.save();
       return project;
     } catch (error) {
@@ -17,11 +20,21 @@ class ProjectService {
 
   async getProjects(userId) {
     try {
-      return await Project.find({ creator: userId })
-        .populate('creator', '_id username email')
+      return await Project.find({ creators: userId })
+        .populate('creators', 'username email')
         .sort({ createdAt: -1 });
     } catch (error) {
       throw new CustomError('Error al obtener los proyectos', 500);
+    }
+  }
+
+  async getPublicProjects() {
+    try {
+      return await Project.find({ isPublic: true })
+        .populate('creators', 'username email')
+        .sort({ createdAt: -1 });
+    } catch (error) {
+      throw new CustomError('Error al obtener los proyectos públicos', 500);
     }
   }
 }

@@ -1,31 +1,86 @@
-import { createContext, useState, useContext, useEffect } from 'react';
+import React, { createContext, useState, useContext, useEffect } from 'react';
 import { authService } from '../services/authService';
 
 const AuthContext = createContext();
 
-export function AuthProvider({ children }) {
-  const [auth, setAuth] = useState(() => {
-    const token = localStorage.getItem('token');
-    const user = localStorage.getItem('user');
-    return token && user ? { token, user: JSON.parse(user) } : null;
-  });
-  const [loading, setLoading] = useState(true);
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth debe ser usado dentro de un AuthProvider');
+  }
+  return context;
+};
 
-  const register = async (userData) => {
-    try {
-      const response = await authService.register(userData);
-      return response;
-    } catch (error) {
-      console.error('Error en registro:', error);
-      throw error;
-    }
+export const AuthProvider = ({ children }) => {
+  const [auth, setAuth] = useState({
+    isAuthenticated: false,
+    user: null,
+    loading: true
+  });
+
+  useEffect(() => {
+    const initializeAuth = async () => {
+      const token = localStorage.getItem('token');
+      if (token) {
+        try {
+          const response = await authService.verifyToken();
+          if (response.status === 'success' && response.data) {
+            setAuth({
+              isAuthenticated: true,
+              user: response.data,
+              loading: false
+            });
+          } else {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            setAuth({
+              isAuthenticated: false,
+              user: null,
+              loading: false
+            });
+          }
+        } catch (error) {
+          console.error('Error al verificar el token:', error);
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          setAuth({
+            isAuthenticated: false,
+            user: null,
+            loading: false
+          });
+        }
+      } else {
+        setAuth(prev => ({ ...prev, loading: false }));
+      }
+    };
+
+    initializeAuth();
+  }, []);
+
+  const updateUser = (userData) => {
+    if (!userData) return;
+
+    setAuth(prev => ({
+      ...prev,
+      user: {
+        ...prev.user,
+        ...userData
+      }
+    }));
   };
 
   const login = async (credentials) => {
     try {
-      const data = await authService.login(credentials);
-      setAuth({ token: data.token, user: data.user });
-      return data;
+      const response = await authService.login(credentials);
+      if (response.token && response.user) {
+        setAuth({
+          isAuthenticated: true,
+          user: response.user,
+          loading: false
+        });
+        return true;
+      }
+      return false;
     } catch (error) {
       console.error('Error en login:', error);
       throw error;
@@ -33,37 +88,35 @@ export function AuthProvider({ children }) {
   };
 
   const logout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    setAuth(null);
+    authService.logout();
+    setAuth({
+      isAuthenticated: false,
+      user: null,
+      loading: false
+    });
   };
 
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    const user = localStorage.getItem('user');
-    if (token && user) {
-      setAuth({ token, user: JSON.parse(user) });
+  const register = async (userData) => {
+    try {
+      const user = await authService.register(userData);
+      return user;
+    } catch (error) {
+      console.error('Error en registro:', error);
+      throw error;
     }
-    setLoading(false);
-  }, []);
+  };
 
   return (
-    <AuthContext.Provider value={{ 
-      auth, 
-      loading, 
-      register, 
-      login, 
-      logout 
-    }}>
-      {children}
+    <AuthContext.Provider 
+      value={{ 
+        auth, 
+        updateUser,
+        login,
+        logout,
+        register
+      }}
+    >
+      {!auth.loading && children}
     </AuthContext.Provider>
   );
-}
-
-export function useAuth() {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth debe ser usado dentro de un AuthProvider');
-  }
-  return context;
-} 
+};

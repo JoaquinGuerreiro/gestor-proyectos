@@ -24,6 +24,9 @@ const DashboardWrapper = styled(PageContainer)`
 const DashboardContent = styled(ContentCard)`
   padding: 2rem;
   overflow: hidden;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
   
   @media (max-width: 768px) {
     padding: 1rem;
@@ -31,23 +34,47 @@ const DashboardContent = styled(ContentCard)`
 `;
 
 const RecentSection = styled.div`
-  margin-top: 2rem;
+  margin: 3rem auto 0;
+  width: 100%;
+  max-width: 1100px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 
   h2 {
-    margin: 0 0 1rem 0;
-    font-size: 1.25rem;
+    margin: 0 0 2rem 0;
+    font-size: 1.5rem;
     color: #2c3e50;
+    text-align: center;
+    font-weight: 600;
   }
 `;
 
 const ProjectsGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: repeat(2, minmax(0, 500px));
+  gap: 3rem;
+  width: 100%;
+  margin: 2rem auto;
+  justify-content: center;
+  padding: 0 2rem;
   
-  @media (max-width: 576px) {
-    grid-template-columns: 1fr;
+  @media (max-width: 1024px) {
+    grid-template-columns: minmax(0, 500px);
+    gap: 2rem;
   }
+`;
+
+const EmptyMessage = styled.p`
+  text-align: center;
+  color: ${props => props.theme.colors.text.secondary};
+  grid-column: 1 / -1;
+  padding: 2rem;
+  background: ${props => props.theme.colors.background.light};
+  border-radius: 8px;
+  margin: 1rem auto;
+  max-width: 600px;
+  width: 100%;
 `;
 
 const IntroSection = styled.section`
@@ -144,10 +171,30 @@ function Dashboard() {
 
   const fetchProjects = async () => {
     try {
-      const data = await projectService.getProjects();
-      setProjects(data);
+      const fetchedProjects = await projectService.getProjects();
+      console.log('Todos los proyectos:', fetchedProjects);
+      console.log('Usuario actual:', auth.user);
+
+      if (!auth.user || !auth.user._id) {
+        console.error('Usuario no autenticado o falta _id');
+        return;
+      }
+
+      const userProjects = fetchedProjects
+        .filter(project => {
+          return project.creators.some(creator => {
+            const creatorId = creator._id || creator;
+            return creatorId.toString() === auth.user._id.toString();
+          });
+        })
+        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+        .slice(0, 2);
+
+      console.log('Proyectos filtrados del usuario:', userProjects);
+      setProjects(userProjects);
     } catch (error) {
-      console.error('Error fetching projects:', error);
+      console.error('Error al cargar los proyectos:', error);
+      notify.error('Error al cargar los proyectos');
     } finally {
       setLoading(false);
     }
@@ -195,17 +242,24 @@ function Dashboard() {
         </IntroSection>
 
         <RecentSection>
-          <h2>Tus Proyectos Recientes</h2>
+          <h2>Mis Últimos Proyectos</h2>
           <ProjectsGrid>
-            {projects.map(project => (
-              <ProjectCard 
-                key={project._id}
-                project={project}
-                onUpdate={fetchProjects}
-                showDeleteButton={false}
-                showCreator={false}
-              />
-            ))}
+            {projects.length > 0 ? (
+              projects.map(project => (
+                <ProjectCard
+                  key={project._id}
+                  project={project}
+                  onProjectDeleted={fetchProjects}
+                  onUpdate={fetchProjects}
+                  showDeleteButton={false}
+                  showCreator={false}
+                />
+              ))
+            ) : (
+              <EmptyMessage>
+                No tienes proyectos creados aún.
+              </EmptyMessage>
+            )}
           </ProjectsGrid>
         </RecentSection>
       </DashboardContent>

@@ -5,9 +5,22 @@ import styled from 'styled-components';
 
 const Card = styled.div`
   background: white;
-  border-radius: 8px;
-  padding: 1.5rem;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  border-radius: 12px;
+  padding: 2rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  margin-bottom: 1rem;
+  overflow: hidden;
+  width: calc(33.333% - 2rem);
+  min-width: 400px;
+  
+  @media (max-width: 1400px) {
+    width: calc(50% - 1.5rem);
+  }
+  
+  @media (max-width: 900px) {
+    width: 100%;
+    min-width: unset;
+  }
 `;
 
 const ProjectHeader = styled.div`

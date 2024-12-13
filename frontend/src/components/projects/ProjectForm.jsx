@@ -51,6 +51,53 @@ const FormGroup = styled.div`
   }
 `;
 
+const TECHNOLOGIES_OPTIONS = [
+  'HTML',
+  'CSS',
+  'JavaScript',
+  'React',
+  'Angular',
+  'Vue',
+  'NodeJS',
+  'PHP',
+  'Python',
+  'Java',
+  'Ruby',
+  'TypeScript',
+  'MongoDB',
+  'MySQL',
+  'PostgreSQL'
+];
+
+const CATEGORY_OPTIONS = [
+  'Desarrollo Frontend',
+  'Desarrollo Backend',
+  'Desarrollo Fullstack',
+  'Programación',
+  'Seguridad Informática',
+  'DevOps',
+  'Mobile Development',
+  'Data Science'
+];
+
+const Select = styled.select`
+  width: 100%;
+  padding: 0.8rem 1rem;
+  border: 2px solid ${props => props.$error ? '#dc3545' : '#e0e0e0'};
+  border-radius: 8px;
+  font-size: 1rem;
+  
+  &:focus {
+    border-color: ${props => props.theme.colors.primary};
+    outline: none;
+  }
+`;
+
+const MultiSelect = styled(Select)`
+  height: auto;
+  min-height: 100px;
+`;
+
 function ProjectForm({ onSuccess, initialData = null }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { register, handleSubmit, formState: { errors } } = useForm({
@@ -102,6 +149,61 @@ function ProjectForm({ onSuccess, initialData = null }) {
             placeholder="Descripción del proyecto"
           />
           {errors.description && <ErrorMessage>{errors.description.message}</ErrorMessage>}
+        </FormGroup>
+
+        <FormGroup>
+          <Label htmlFor="technologies">Tecnologías Utilizadas</Label>
+          <MultiSelect
+            id="technologies"
+            multiple
+            {...register('technologies', { required: 'Selecciona al menos una tecnología' })}
+          >
+            {TECHNOLOGIES_OPTIONS.map(tech => (
+              <option key={tech} value={tech}>{tech}</option>
+            ))}
+          </MultiSelect>
+          {errors.technologies && <ErrorMessage>{errors.technologies.message}</ErrorMessage>}
+        </FormGroup>
+
+        <FormGroup>
+          <Label htmlFor="category">Categoría</Label>
+          <Select
+            id="category"
+            {...register('category', { required: 'La categoría es requerida' })}
+          >
+            <option value="">Selecciona una categoría</option>
+            {CATEGORY_OPTIONS.map(cat => (
+              <option key={cat} value={cat}>{cat}</option>
+            ))}
+          </Select>
+          {errors.category && <ErrorMessage>{errors.category.message}</ErrorMessage>}
+        </FormGroup>
+
+        <FormGroup>
+          <Label htmlFor="repositoryUrl">URL del Repositorio</Label>
+          <Input
+            id="repositoryUrl"
+            type="url"
+            {...register('repositoryUrl', {
+              pattern: {
+                value: /^https?:\/\/.+/,
+                message: 'Ingresa una URL válida'
+              }
+            })}
+            placeholder="https://github.com/usuario/repositorio"
+          />
+          {errors.repositoryUrl && <ErrorMessage>{errors.repositoryUrl.message}</ErrorMessage>}
+        </FormGroup>
+
+        <FormGroup>
+          <Label htmlFor="imageUrl">URL de la Imagen</Label>
+          <Input
+            id="imageUrl"
+            type="url"
+            {...register('imageUrl')}
+            placeholder="https://ejemplo.com/imagen.jpg"
+          />
+          {errors.imageUrl && <ErrorMessage>{errors.imageUrl.message}</ErrorMessage>}
         </FormGroup>
 
         <LoadingButton 

@@ -50,7 +50,7 @@ function Tasks() {
     <TasksWrapper>
       <TasksContainer>
         <Header>
-          <Title>Mis Tareas</Title>
+          <Title>Mis Tareas Personales</Title>
           <CreateButton onClick={() => setIsModalOpen(true)}>
             Crear Nueva Tarea
           </CreateButton>

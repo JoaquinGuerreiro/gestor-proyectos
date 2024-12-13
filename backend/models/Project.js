@@ -10,6 +10,30 @@ const projectSchema = new mongoose.Schema({
     type: String,
     trim: true
   },
+  technologies: [{
+    type: String,
+    enum: ['HTML', 'CSS', 'JavaScript', 'React', 'Angular', 'Vue', 'NodeJS', 'PHP', 'Python', 'Java', 'Ruby', 'TypeScript', 'MongoDB', 'MySQL', 'PostgreSQL'],
+    required: true
+  }],
+  category: {
+    type: String,
+    enum: ['Desarrollo Frontend', 'Desarrollo Backend', 'Desarrollo Fullstack', 'Programación', 'Seguridad Informática', 'DevOps', 'Mobile Development', 'Data Science'],
+    required: true
+  },
+  repositoryUrl: {
+    type: String,
+    trim: true,
+    validate: {
+      validator: function(v) {
+        return !v || /^https?:\/\/.+/.test(v);
+      },
+      message: 'La URL del repositorio debe ser válida'
+    }
+  },
+  imageUrl: {
+    type: String,
+    trim: true
+  },
   status: {
     type: String,
     enum: ['planning', 'in_progress', 'completed', 'on_hold'],
@@ -19,12 +43,11 @@ const projectSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
-  creator: {
+  creators: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: true,
-    index: true
-  },
+    required: true
+  }],
   comments: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Comment'
@@ -34,6 +57,6 @@ const projectSchema = new mongoose.Schema({
 });
 
 // Añadimos un índice compuesto para optimizar las consultas
-projectSchema.index({ creator: 1, createdAt: -1 });
+projectSchema.index({ creators: 1, createdAt: -1 });
 
 module.exports = mongoose.model('Project', projectSchema); 

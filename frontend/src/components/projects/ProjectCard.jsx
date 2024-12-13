@@ -38,11 +38,21 @@ const ActionButton = styled(Button)`
 const Card = styled.div`
   background: white;
   border-radius: 12px;
-  padding: 1.5rem;
+  padding: 2rem;
   box-shadow: 0 2px 8px rgba(0,0,0,0.1);
   margin-bottom: 1rem;
   overflow: hidden;
-  width: 100%;
+  width: calc(33.333% - 2rem);
+  min-width: 400px;
+  
+  @media (max-width: 1400px) {
+    width: calc(50% - 1.5rem);
+  }
+  
+  @media (max-width: 900px) {
+    width: 100%;
+    min-width: unset;
+  }
 `;
 
 const ProjectContent = styled.div`
@@ -51,15 +61,9 @@ const ProjectContent = styled.div`
 
 const TitleRow = styled.div`
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1rem;
+  flex-direction: column;
   gap: 1rem;
-  
-  @media (max-width: 576px) {
-    flex-direction: column;
-    align-items: flex-start;
-  }
+  margin-bottom: 1rem;
 `;
 
 const ProjectTitle = styled.h3`
@@ -67,6 +71,7 @@ const ProjectTitle = styled.h3`
   color: #2c3e50;
   font-size: 1.25rem;
   font-weight: 600;
+  word-break: break-word;
 `;
 
 const ProjectDescription = styled.p`
@@ -84,7 +89,15 @@ const ProjectDescription = styled.p`
 const Actions = styled.div`
   display: flex;
   gap: 0.5rem;
-  flex-shrink: 0;
+  flex-wrap: wrap;
+  
+  @media (max-width: 576px) {
+    width: 100%;
+    
+    button {
+      flex: 1;
+    }
+  }
 `;
 
 const ProjectMeta = styled.div`
@@ -111,13 +124,13 @@ const CreatorInfo = styled.div`
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  color: #666;
+  color: ${props => props.theme.colors.text.secondary};
   font-size: 0.875rem;
   
   svg {
     width: 16px;
     height: 16px;
-    color: #999;
+    color: ${props => props.theme.colors.text.muted};
   }
 `;
 
@@ -175,7 +188,43 @@ const Comment = styled.div`
   }
 `;
 
-function ProjectCard({ project, onUpdate, showDeleteButton = true, showEditButton = true, showCreator = true }) {
+const TechBadge = styled.span`
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  margin: 0.25rem;
+  background: #e3f2fd;
+  color: #1976d2;
+  border-radius: 12px;
+  font-size: 0.75rem;
+`;
+
+const ProjectImage = styled.img`
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+`;
+
+const ProjectLinks = styled.div`
+  display: flex;
+  gap: 1rem;
+  margin: 1rem 0;
+`;
+
+const ProjectLink = styled.a`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: ${props => props.theme.colors.primary};
+  text-decoration: none;
+  
+  &:hover {
+    text-decoration: underline;
+  }
+`;
+
+function ProjectCard({ project, onProjectDeleted, onProjectUpdated, showDeleteButton = true, showEditButton = true, showCreator = true }) {
   const { auth } = useAuth();
   const [loading, setLoading] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -183,8 +232,17 @@ function ProjectCard({ project, onUpdate, showDeleteButton = true, showEditButto
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState('');
   const [loadingComments, setLoadingComments] = useState(false);
+  const [imageError, setImageError] = useState(false);
+  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3333';
 
-  const isCreator = String(auth?.user?._id) === String(project?.creator?._id);
+  const isCreator = project.creators.some(creator => {
+    const creatorId = creator._id || creator;
+    return creatorId.toString() === auth.user._id.toString();
+  });
+
+  console.log('Project creators:', project.creators);
+  console.log('Current user:', auth.user);
+  console.log('Is creator:', isCreator);
 
   const handleDelete = async () => {
     if (!window.confirm('¿Estás seguro de que deseas eliminar este proyecto?')) {
@@ -195,7 +253,9 @@ function ProjectCard({ project, onUpdate, showDeleteButton = true, showEditButto
       setLoading(true);
       await projectService.deleteProject(project._id);
       notify.success('Proyecto eliminado exitosamente');
-      onUpdate();
+      if (onProjectDeleted) {
+        onProjectDeleted(project._id);
+      }
     } catch (error) {
       console.error('Error al eliminar el proyecto:', error);
       notify.error('Error al eliminar el proyecto');
@@ -258,8 +318,66 @@ function ProjectCard({ project, onUpdate, showDeleteButton = true, showEditButto
     ));
   };
 
+  const handleEditSuccess = (updatedProject) => {
+    if (onProjectUpdated) {
+      onProjectUpdated(updatedProject);
+    }
+    setIsEditModalOpen(false);
+  };
+
+  const getImageUrl = (imageUrl) => {
+    if (!imageUrl) return null;
+    // Si la URL ya es absoluta, usarla directamente
+    if (imageUrl.startsWith('http')) return imageUrl;
+    // Si no, construir la URL completa
+    return `${apiUrl}${imageUrl}`;
+  };
+
+  const handleImageError = (e) => {
+    const fullUrl = getImageUrl(project.imageUrl);
+    console.error('Error loading image:', {
+      originalUrl: project.imageUrl,
+      fullUrl: fullUrl,
+      apiUrl: apiUrl
+    });
+    
+    // Intentar verificar si la imagen existe
+    fetch(fullUrl)
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+      })
+      .catch(error => {
+        console.error('Fetch error:', error);
+      });
+
+    setImageError(true);
+  };
+
   return (
     <Card>
+      {project.imageUrl && !imageError ? (
+        <ProjectImage 
+          src={getImageUrl(project.imageUrl)}
+          alt={project.name}
+          onError={handleImageError}
+        />
+      ) : (
+        <div style={{
+          width: '100%',
+          height: '200px',
+          backgroundColor: '#f0f0f0',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          borderRadius: '8px',
+          marginBottom: '1rem'
+        }}>
+          <span>No image available</span>
+        </div>
+      )}
+      
       <ProjectContent>
         <TitleRow>
           <ProjectTitle>{project.name}</ProjectTitle>
@@ -285,13 +403,39 @@ function ProjectCard({ project, onUpdate, showDeleteButton = true, showEditButto
           <ProjectBadge $isPublic={project.isPublic}>
             {project.isPublic ? '🌎 Proyecto Público' : '🔒 Proyecto Privado'}
           </ProjectBadge>
-          {showCreator && (
+          {showCreator && project.creator && (
             <CreatorInfo>
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
               </svg>
-              {project.creator?.username || 'Usuario desconocido'}
+              {project.creator.username || 'Usuario desconocido'}
             </CreatorInfo>
+          )}
+        </ProjectMeta>
+
+        <ProjectMeta>
+          <div>
+            <strong>Categoría:</strong> {project.category}
+          </div>
+          
+          <div>
+            <strong>Tecnologías:</strong>
+            <div>
+              {project.technologies.map(tech => (
+                <TechBadge key={tech}>{tech}</TechBadge>
+              ))}
+            </div>
+          </div>
+          
+          {project.repositoryUrl && (
+            <ProjectLinks>
+              <ProjectLink href={project.repositoryUrl} target="_blank" rel="noopener noreferrer">
+                <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                  <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.012 8.012 0 0 0 16 8c0-4.42-3.58-8-8-8z"/>
+                </svg>
+                Ver Repositorio
+              </ProjectLink>
+            </ProjectLinks>
           )}
         </ProjectMeta>
 
@@ -327,14 +471,11 @@ function ProjectCard({ project, onUpdate, showDeleteButton = true, showEditButto
         <EditProjectModal
           project={project}
           onClose={() => setIsEditModalOpen(false)}
-          onProjectUpdated={() => {
-            setIsEditModalOpen(false);
-            onUpdate();
-          }}
+          onProjectUpdated={handleEditSuccess}
         />
       )}
     </Card>
   );
 }
 
-export default ProjectCard; 
+export default ProjectCard;
