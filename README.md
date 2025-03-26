@@ -38,7 +38,7 @@ Una aplicación web fullstack para la gestión de proyectos y tareas, construida
 
 1. Clonar el repositorio
 ```bash
-git clone [URL_DEL_REPOSITORIO]
+git clone [https://github.com/JoaquinGuerreiro/gestor-proyectos]
 ```
 
 2. Instalar dependencias del backend
