@@ -1,38 +1,41 @@
 # Gestor de Proyectos y Tareas
 
-Una aplicación web fullstack para la gestión de proyectos y tareas, construida con el stack MERN (MongoDB, Express, React, Node.js).
+Una aplicación web fullstack para la **gestión de proyectos y tareas**, construida con el stack **MERN** (MongoDB, Express, React, Node.js).
 
-## Características
+## ✨ Características
 
-- 🔐 Autenticación completa de usuarios
-- 📁 Creación y gestión de proyectos
-- ✅ Sistema de tareas con drag & drop
-- 📊 Gestión de estados de tareas
-- 🖼️ Soporte para uploads de archivos
-- 📱 Diseño responsive
+- 🔐 **Autenticación completa de usuarios** (registro, login, JWT).
+- 📁 **Gestión de proyectos**: crear, editar y eliminar proyectos propios.
+- 🤝 **Colaboración**: invitar a otros usuarios a participar en tus proyectos.
+- 🌍 **Proyectos públicos**: acceder a proyectos visibles para toda la comunidad.
+- ✅ **Gestión de tareas**: crear tareas asociadas a proyectos, con título, descripción, prioridad (alta, media, baja), fecha de vencimiento, editar/eliminar y marcar como completadas.
+- 🖼️ **Gestión de perfil de usuario**: actualizar foto, nombre y descripción personal.
+- 📊 **Dashboard** con introducción al sistema y listado de los últimos proyectos creados.
+- 📱 **Diseño responsive** adaptado a distintos dispositivos.
 
-## Tecnologías Utilizadas
+## 🛠️ Tecnologías Utilizadas
 
 ### Frontend
 - React con Vite
-- React Beautiful DND
-- React Toastify
-- Axios
-- Context API
+- Context API (gestión de estado global)
+- React Toastify (notificaciones)
+- Axios (consumo de API)
+- HTML5, CSS3
 
 ### Backend
 - Node.js
 - Express
 - MongoDB
 - Mongoose
-- JWT
-- Joi para validaciones
+- JWT (autenticación y seguridad)
+- Joi (validaciones de datos)
 
-## Requisitos Previos
+## 🚀 Instalación y ejecución
 
-- Node.js (versión 14 o superior)
-- MongoDB instalado y ejecutándose
-- npm o yarn
+### Requisitos previos
+- **Node.js** (versión 14 o superior)
+- **MongoDB** instalado y ejecutándose en local
+- **npm** o **yarn**
 
 ## Instalación
 
@@ -72,6 +75,11 @@ npm start
 ```bash
 cd frontend
 npm run dev
+```
+
+3. Iniciar la conexión en MongoDB con los datos apropiados
+```env
+MONGODB_URI=mongodb://localhost:27017/AH2023
 ```
 
 ## Contacto
