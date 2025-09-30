@@ -85,7 +85,7 @@ MONGODB_URI=mongodb://localhost:27017/AH2023
 ## Contacto
 - LinkedIn: www.linkedin.com/in/joaquin-guerreiro-apolonia
 - Email: joaquinguerreiro12@gmail.com
-- Portfolio: https://joaquin-guerreiro-app.vercel.app/
+- Portfolio: https://joaquin-guerreiro.vercel.app
 
 ## Licencia
 Este proyecto está bajo la Licencia MIT 
